@@ -21,15 +21,18 @@ in CSV format. To use it:
 
    This will produce CSV output with the following columns:
 
-   `browser_name` - The name of the browser
-   `browser_version` - The major version of the browser
-   `equivalent_name` - The closest equivalent major browser (eg. Chrome, Safari, Firefox)
-   `equivalent_version` - The equivalent major browser version
-   `ua_string` - The complete User Agent string
+   - `browser_name` - The name of the browser
+   - `browser_version` - The major version of the browser
+   - `equivalent_name` - The closest equivalent major browser (eg. Chrome, Safari, Firefox)
+   - `equivalent_version` - The equivalent major browser version
+   - `ua_string` - The complete User Agent string
 
    For major browsers with their own engines like Chrome, `browser_name` and `equivalent_name` will be the same.
    For other browsers this will be the major browser with the same engine. For example,
    modern versions of Edge and Opera will show "Chrome" in this column.
+   The `equivalent_*` fields are useful to generate browser engine statistics
+   that can be cross-referenced against [MDN](https://developer.mozilla.org/en-US/) or
+   [caniuse.com](https://caniuse.com).
 
 3. Load the CSV output into your favorite data processing / visualization tools for
    further analysis
