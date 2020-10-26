@@ -3,10 +3,12 @@
 This repository contains scripts for parsing and analysing user agent information
 from nginx access logs.
 
-## `parse_access_log.py`
+## Tools
+
+### `parse_access_log.py`
 
 This script parses an nginx access log and extracts browser version information
-in CSV format.
+in CSV format. To use it:
 
 1. Download an nginx access log from a production server or a logging service
    such as Papertrail.
