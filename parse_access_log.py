@@ -85,6 +85,7 @@ def parse_user_agent(user_agent_str):
         user_agent_str = user_agent_str[len(match[0]) :].strip()
 
         # Parse comment.
+        comment = None
         if len(user_agent_str) and user_agent_str[0] == "(":
             depth = 1
             for pos in range(1, len(user_agent_str)):
@@ -162,7 +163,7 @@ def equivalent_major_browser(user_agent_tokens):
         matches = [t for t in user_agent_tokens if t[0] in names]
         return matches[0] if matches else None
 
-    chrome_token = find_token("Chrome", "Brave Chrome", "like Chrome")
+    chrome_token = find_token("Chrome", "Brave Chrome", "like Chrome", "HeadlessChrome")
     if chrome_token:
         return ("Chrome", major_version(chrome_token[1]))
 
@@ -178,6 +179,12 @@ def equivalent_major_browser(user_agent_tokens):
     #
     # The Safari version number doesn't appear as a product token, but it can be
     # inferred from the iOS version info in the `Mozilla/5.0` token.
+    #
+    # This does not work if the user is using "Request Desktop Site". In that
+    # case the user agent returns a hard-coded macOS version. See
+    # https://bugs.webkit.org/show_bug.cgi?id=196275. We could however infer
+    # the Safari version to be whatever shipped with the given hard-coded macOS
+    # version.
     moz_token = find_token("Mozilla")
     platform_info = moz_token[2] if moz_token else None
     if platform_info:
@@ -185,6 +192,11 @@ def equivalent_major_browser(user_agent_tokens):
         if ios_version_match:
             ios_version = ios_version_match[1].replace("_", ".")
             return ("Safari", major_version(ios_version))
+
+        ie_match = re.search("Trident/7.0; rv:([0-9.]+)", platform_info)
+        if ie_match:
+            ie_version = ie_match[1]
+            return ("Internet Explorer", major_version(ie_version))
 
     return None
 
