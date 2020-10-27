@@ -151,7 +151,7 @@ def sort_user_agent_tokens(tokens):
     return sorted(tokens, key=token_priority)
 
 
-def major_version(version_str):
+def get_major_version(version_str):
     return version_str.split(".")[0]
 
 
@@ -159,9 +159,12 @@ def equivalent_major_browser(user_agent_tokens):
     """
     Return the major browser name and version that is equivalent to a given user agent
 
-    This attempts to match a user agent to the closest equivalent major browser
-    and version, which can be used to check what features the browser is likely
-    to support based on information in MDN or caniuse.com.
+    This attempts to match a user agent to the main browser associated with the
+    engine which the browser uses. For example, Chrome-derived browsers such
+    as Edge and Brave are mapped to Chrome, and iOS browsers are mapped to Safari.
+
+    The resulting browser/version is one which can be checked against compatibility
+    data on MDN or caniuse.com.
     """
 
     def find_token(*names):
@@ -170,45 +173,62 @@ def equivalent_major_browser(user_agent_tokens):
 
     chrome_token = find_token("Chrome", "Brave Chrome", "like Chrome", "HeadlessChrome")
     if chrome_token:
-        return ("Chrome", major_version(chrome_token[1]))
+        return ("Chrome", get_major_version(chrome_token[1]))
 
     firefox_token = find_token("Firefox")
     if firefox_token:
-        return ("Firefox", major_version(firefox_token[1]))
+        return ("Firefox", get_major_version(firefox_token[1]))
 
     safari_token = find_token("Version")
     if safari_token:
-        return ("Safari", major_version(safari_token[1]))
+        return ("Safari", get_major_version(safari_token[1]))
 
-    # Embedded web views on iOS all run the same WebKit release as Safari.
-    #
-    # The Safari version number doesn't appear as a product token, but it can be
-    # inferred from the iOS version info in the `Mozilla/5.0` token.
-    #
-    # This does not work if the user is using "Request Desktop Site". In that
-    # case the user agent returns a hard-coded macOS version. See
-    # https://bugs.webkit.org/show_bug.cgi?id=196275. We could however infer
-    # the Safari version to be whatever shipped with the given hard-coded macOS
-    # version.
+    # In some environments there isn't a product token that directly identifies
+    # the browser engine. In this situation we fall back to inferring it from
+    # the platform information contained in the comment of the `Mozilla/5.0`
+    # product token.
     moz_token = find_token("Mozilla")
     platform_info = moz_token[2] if moz_token else None
     if platform_info:
+        # Embedded web views on iOS all run the same WebKit release as Safari.
+        # The WebKit/Safari version can be inferred from the iOS version.
         ios_version_match = re.search("(?:iPhone|CPU) OS ([0-9_]+)", platform_info)
         if ios_version_match:
             ios_version = ios_version_match[1].replace("_", ".")
-            return ("Safari", major_version(ios_version))
+            return ("Safari", get_major_version(ios_version))
 
+        # If a web page on iOS is being presented with the "Request Desktop Site" mode,
+        # then the user agent changes to be a macOS user agent. As of 2020-10,
+        # the macOS "version" is hard-coded. See https://bugs.webkit.org/show_bug.cgi?id=196275.
+        macos_version_match = re.search("Mac OS X ([0-9]+_[0-9_]+)", platform_info)
+        if macos_version_match:
+            major_version, minor_version, *patch_version = macos_version_match[1].split(
+                "_"
+            )
+            macos_version = (int(major_version), int(minor_version))
+
+            if macos_version >= (10, 10) and macos_version <= (10, 14):
+                safari_version = minor_version
+            elif macos_version > (10, 14):
+                # On macOS Big Sur and above Safari will be at least version 14.
+                # In future there will be new releases as well.
+                safari_version = 14
+            if safari_version:
+                return ("Safari", safari_version)
+
+        # Internet Explorer version information is contained inside the comment
+        # of the Mozilla/5.0 token, rather than being its own token.
         ie_match = re.search("Trident/7.0; rv:([0-9.]+)", platform_info)
         if ie_match:
             ie_version = ie_match[1]
-            return ("Internet Explorer", major_version(ie_version))
+            return ("Internet Explorer", get_major_version(ie_version))
 
     return None
 
 
 # Mapping between product names in the user agent string and browser names.
 ua_product_name_to_browser = {
-    "CriOS": "Chrome (iOS)",
+    "CriOS": "Chrome (iOS)",  # Chrome for iOS. Uses same WebKit engine as Safari.
     "Edg": "Edge (Modern)",  # Chromium-based Edge.
     "Edge": "Edge (Legacy)",  # EdgeHTML-based Edge.
     "OPR": "Opera",  # Chromium-based Opera.
@@ -234,7 +254,7 @@ for entry in parse_nginx_combined_log(line.strip() for line in sys.stdin):
         name = main_token[0]
         name = ua_product_name_to_browser.get(name) or name
         version = main_token[1]
-        version_major = major_version(version) if version else None
+        version_major = get_major_version(version) if version else None
         compat_name = compat_token[0] if compat_token else None
         compat_version = compat_token[1] if compat_token else None
 
