@@ -236,6 +236,7 @@ def equivalent_major_browser(user_agent_tokens):
 
 # Mapping between product names in the user agent string and browser names.
 ua_product_name_to_browser = {
+    "candroid": "Canvas Mobile",  # Canvas Mobile for Android. See https://community.canvaslms.com/t5/Mobile-Users/API-Mobile-Device-Usage/td-p/154895
     "CriOS": "Chrome (iOS)",  # Chrome for iOS. Uses same WebKit engine as Safari.
     "Edg": "Edge (Modern)",  # Chromium-based Edge.
     "EdgA": "Edge (Android)",  # Chromium-based Edge on Android.
