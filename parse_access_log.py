@@ -247,13 +247,52 @@ ua_product_name_to_browser = {
 }
 
 
+def is_user_agent_a_bot(tokens):
+    """
+    Return true if a parsed User-Agent header from a request probably indicates a bot.
+    """
+
+    # Collect candidate bot names from product tokens. The bot name will often,
+    # but not always, appear in a comment rather than as the `name` part of a product token.
+    #
+    # See https://support.google.com/webmasters/answer/1061943?hl=en for example.
+    terms = set()
+    for name, version, comment in tokens:
+        terms.add(name)
+        if comment:
+            comment_terms = [t.strip() for t in comment.split(";")]
+            for ct in comment_terms:
+                if "/" in ct:
+                    # If a term like "Googlebot/2.1" appears in a comment, extract
+                    # just the first part.
+                    ct = ct.split("/")[0]
+                terms.add(ct)
+
+    # Check candidates to see if there is a name which suggests user agent is
+    # a bot.
+    for term in terms:
+        # Match names like "Googlebot" or "FooBot".
+        if re.match(".*bot$", term, re.IGNORECASE):
+            return True
+
+        # Match names like "Pingdom_bot_1.0"
+        if re.search("[^A-Za-z]bot[^A-Za-z]", name, re.IGNORECASE):
+            return True
+
+    return False
+
+
 csv_writer = csv.writer(sys.stdout)
 for entry in parse_nginx_combined_log(line.strip() for line in sys.stdin):
+    # Skip entries with no User-Agent header.
     if entry.user_agent == "-":
-        # No User-Agent header present.
         continue
 
+    # Skip entries from likely bots.
     tokens = parse_user_agent(entry.user_agent)
+    if is_user_agent_a_bot(tokens):
+        continue
+
     tokens = sort_user_agent_tokens(tokens)
     compat_token = equivalent_major_browser(tokens)
 
