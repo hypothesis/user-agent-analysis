@@ -221,6 +221,10 @@ ua_product_name_to_browser = {
 
 csv_writer = csv.writer(sys.stdout)
 for entry in parse_nginx_combined_log(line.strip() for line in sys.stdin):
+    if entry.user_agent == "-":
+        # No User-Agent header present.
+        continue
+
     tokens = parse_user_agent(entry.user_agent)
     tokens = sort_user_agent_tokens(tokens)
     compat_token = equivalent_major_browser(tokens)
