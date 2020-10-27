@@ -171,13 +171,21 @@ def equivalent_major_browser(user_agent_tokens):
         matches = [t for t in user_agent_tokens if t[0] in names]
         return matches[0] if matches else None
 
-    chrome_token = find_token("Chrome", "Brave Chrome", "like Chrome", "HeadlessChrome")
-    if chrome_token:
-        return ("Chrome", get_major_version(chrome_token[1]))
+    # Find EdgeHTML-based versions of Edge. Note that modern Edge versions use
+    # "Edg" as the product token and are Chrome-based.
+    edge_legacy_token = find_token("Edge")
+    if edge_legacy_token:
+        return ("Edge (Legacy)", get_major_version(edge_legacy_token[1]))
 
     firefox_token = find_token("Firefox")
     if firefox_token:
         return ("Firefox", get_major_version(firefox_token[1]))
+
+    # Check for Chrome-based browsers. This comes after the check for Edge (Legacy)
+    # because Edge Legacy had to pretend to be Chrome for web compatibility reasons.
+    chrome_token = find_token("Chrome", "Brave Chrome", "like Chrome", "HeadlessChrome")
+    if chrome_token:
+        return ("Chrome", get_major_version(chrome_token[1]))
 
     safari_token = find_token("Version")
     if safari_token:
