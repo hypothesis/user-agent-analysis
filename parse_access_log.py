@@ -27,6 +27,11 @@ def parse_nginx_combined_log(lines):
     Parse an nginx access log using the default "combined" format.
 
     See http://nginx.org/en/docs/http/ngx_http_log_module.html
+
+    For convenience this function will also parse log lines which contain additional
+    information in front of the nginx access log line. For example logs from Papertrail
+    contain `<timestamp> <machine> <log source>:` entries in front of the log
+    line.
     """
 
     # The "combined" log line format consists of:
@@ -34,7 +39,7 @@ def parse_nginx_combined_log(lines):
     # $remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent
     # "$http_referer" "$http_user_agent"
 
-    ip_pat = "[0-9.]+"
+    ip_pat = "[0-9.]{4}"
     user_pat = "[^ ]+"
     time_pat = "[^]]+"
     quoted_str_pat = '[^"]*'
@@ -42,7 +47,7 @@ def parse_nginx_combined_log(lines):
     combined_pat = f'({ip_pat}) - ({user_pat}) \[({time_pat})\] "({quoted_str_pat})" ({number_pat}) ({number_pat}) "({quoted_str_pat})" "({quoted_str_pat})"'
 
     for line in lines:
-        match = re.match(combined_pat, line)
+        match = re.search(combined_pat, line)
         if not match:
             raise Exception(f"Failed to parse log line `{line}`")
         yield AccessLogEntry(
