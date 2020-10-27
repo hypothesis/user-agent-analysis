@@ -238,11 +238,17 @@ def equivalent_major_browser(user_agent_tokens):
 ua_product_name_to_browser = {
     "CriOS": "Chrome (iOS)",  # Chrome for iOS. Uses same WebKit engine as Safari.
     "Edg": "Edge (Modern)",  # Chromium-based Edge.
+    "EdgA": "Edge (Android)",  # Chromium-based Edge on Android.
     "Edge": "Edge (Legacy)",  # EdgeHTML-based Edge.
+    "FxiOS": "Firefox Focus",  # Firefox Focus. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent/Firefox.
+    "Mobile": "WebKit",  # Unbranded WebKit-based browsers contain "Mobile/15E148"
     "OPR": "Opera",  # Chromium-based Opera.
     # Modern versions of Safari include both a `Safari/<Version>` and `Version/<Version>` token.
     # The token with the product name `Version` actually contains the user-facing
     # Safari version.
+    #
+    # TODO: There are some Android browsers which include `Version/4.0` or similar in their
+    # UA strings. These should not be reported as Safari.
     "Version": "Safari",
 }
 
