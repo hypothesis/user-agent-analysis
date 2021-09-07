@@ -23,6 +23,9 @@ in CSV format. To use it:
    ```
    papertrail -g <Log group> --min-time '1 day ago' access.log
    ```
+   
+   To see available log groups, go to the [Papertrail Dashboard](https://papertrailapp.com/dashboard).
+   For Hypothesis staff, the "LMS Prod" log group contains all traffic from the lms application for example.
 
 2. Pipe the log file through `parse_access_log.py`:
 
