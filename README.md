@@ -49,4 +49,15 @@ in CSV format. To use it:
    [caniuse.com](https://caniuse.com).
 
 3. Load the CSV output into your favorite data processing / visualization tools for
-   further analysis
+   further analysis.
+   
+   For example, to load the data into a SQLite database and find out how many requests came
+   from browsers that are based on Chrome >= 80:
+   
+   ```sh
+   $ sqlite3 my_logs.db
+   sqlite> create table useragents (browser, version, engine, engine_version int, useragent);
+   sqlite> .separator ,
+   sqlite> .import lms_prod.csv useragents
+   sqlite> select count(*) from useragents where engine = 'Chrome' and engine_version > 80;
+   ```
