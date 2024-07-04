@@ -30,10 +30,10 @@ in CSV format. To use it:
 2. Pipe the log file through `parse_access_log.py`:
 
    ```sh
-   cat access.log | python parse_access_log.py
+   cat access.log | python parse_access_log.py > logs.csv
    ```
 
-   This will produce CSV output with the following columns:
+   This will produce a CSV file with the following columns:
 
    - `browser_name` - The name of the browser
    - `browser_version` - The major version of the browser
@@ -48,8 +48,24 @@ in CSV format. To use it:
    likely to support based on information in [MDN](https://developer.mozilla.org/en-US/) or
    [caniuse.com](https://caniuse.com).
 
-3. Load the CSV output into your favorite data processing / visualization tools for
-   further analysis.
+3. The most common query we want to answer is what percentage of requests came
+   from browsers matching certain version criteria. This can be answered using
+   the `analyze_stats.py` script:
+
+   ```shellsession
+   $ python analyze_stats.py logs.csv "chrome>=92,safari>=14,firefox>=90"
+   52548 rows, 51574 valid (98.1%), 974 skipped
+   99.72% of rows match query
+   ```
+
+   This shows that 99.7% of requests came from browsers that are either Chrome
+   92+, Safari 14+ or Firefox 90+.
+
+   The skipped rows are those for which the browser engine name or version are
+   unknown. These are usually queries coming from bots or scripts.
+
+4. For more advanced analysis, load the CSV output into your favorite data
+   processing / visualization tools.
    
    For example, to load the data into a SQLite database and find out how many requests came
    from browsers that are based on Chrome >= 80:
