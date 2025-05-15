@@ -1,0 +1,18 @@
+name: Continuous integration
+on: [push, pull_request]
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # https://docs.astral.sh/uv/guides/integration/github/#installation
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: 0.7.3
+
+      - name: Lint
+        run: |
+          make sure

@@ -64,7 +64,9 @@ Match user agent details against a browser version query.
         "query",
         help="Query to match each row against. eg. 'chrome>=90,safari>=14,firefox>=90'",
     )
-    parser.add_argument("--print-skipped", action="store_true", help="Print skipped rows")
+    parser.add_argument(
+        "--print-skipped", action="store_true", help="Print skipped rows"
+    )
     args = parser.parse_args()
 
     terms = parse_query(args.query)
@@ -72,7 +74,6 @@ Match user agent details against a browser version query.
     n_skipped_rows = 0
     n_valid_rows = 0
     n_matches = 0
-    print_skipped = args.print_skipped
 
     # Unique (row, reason) pairs for rows that were skipped
     skipped_rows: set[tuple[tuple, str]] = set()
