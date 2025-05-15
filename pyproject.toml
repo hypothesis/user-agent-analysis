@@ -1,0 +1,7 @@
+[project]
+name = "user-agent-analysis"
+version = "0.1.0"
+description = "Tools for analyzing browser usage information in access logs"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
