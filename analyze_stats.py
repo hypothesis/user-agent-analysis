@@ -64,6 +64,7 @@ Match user agent details against a browser version query.
         "query",
         help="Query to match each row against. eg. 'chrome>=90,safari>=14,firefox>=90'",
     )
+    parser.add_argument("--print-skipped", action="store_true", help="Print skipped rows")
     args = parser.parse_args()
 
     terms = parse_query(args.query)
@@ -71,6 +72,16 @@ Match user agent details against a browser version query.
     n_skipped_rows = 0
     n_valid_rows = 0
     n_matches = 0
+    print_skipped = args.print_skipped
+
+    # Unique (row, reason) pairs for rows that were skipped
+    skipped_rows: set[tuple[tuple, str]] = set()
+
+    def skip_row(row, reason):
+        nonlocal n_skipped_rows
+        n_skipped_rows += 1
+        if args.print_skipped:
+            skipped_rows.add((tuple(row), reason))
 
     with open(args.csv_file) as csv_file:
         reader = csv.reader(csv_file)
@@ -79,24 +90,27 @@ Match user agent details against a browser version query.
                 browser, browser_version, engine, engine_version, user_agent = row
             except ValueError:
                 # Number of columns doesn't match expected count
-                n_skipped_rows += 1
+                skip_row(row, "wrong column count")
                 continue
 
             if not engine or not engine_version:
                 # Browser engine or version could not be identified
-                n_skipped_rows += 1
+                skip_row(row, "unknown browser")
                 continue
 
             try:
                 engine_version = int(engine_version)
             except ValueError:
                 # Engine version is not a number
-                n_skipped_rows += 1
+                skip_row(row, "version not an int")
                 continue
 
             n_valid_rows += 1
             if any(term.matches(engine, engine_version) for term in terms):
                 n_matches += 1
+
+    for row, reason in sorted(skipped_rows):
+        print(f"Skipping row ({reason}): {row}", file=sys.stderr)
 
     if n_valid_rows == 0:
         print("CSV file is empty", file=sys.stderr)
